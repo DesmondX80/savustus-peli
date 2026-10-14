@@ -3,92 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mökkisavustamo 3D - Pro Edition</title>
+    <title>Mökkisavustamo 3D - Authentics Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0f1115; }
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0c0e12; }
         canvas { display: block; width: 100vw; height: 100vh; }
-        .glass { background: rgba(18, 22, 31, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass { background: rgba(15, 18, 25, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
 </head>
 <body class="text-stone-100 select-none">
 
-<div id="canvas-container" class="absolute inset-0 z-0 cursor-grab active:cursor-grabbing"></div>
+<div id="canvas-container" class="absolute inset-0 z-0"></div>
 
-<!-- UI -->
+<!-- UI Overlay -->
 <div class="relative z-10 pointer-events-none flex flex-col justify-between h-screen p-4 md:p-6">
 
     <!-- Yläpalkki -->
-    <header class="glass p-4 rounded-2xl pointer-events-auto shadow-2xl max-w-4xl mx-auto w-full flex flex-wrap justify-between items-center">
+    <header class="glass p-4 rounded-2xl pointer-events-auto shadow-2xl max-w-5xl mx-auto w-full flex flex-wrap justify-between items-center border-b border-amber-500/20">
         <div>
             <h1 class="text-xl font-black tracking-wide text-amber-400 flex items-center gap-2">
-                🔥 Mökkisavustamo 3D Pro
+                🔥 Aito Mökkisavustamo 3D
             </h1>
-            <p class="text-xs text-stone-400">Pyöritä hiirellä kameraa | Säädä savua ja lämpöä</p>
+            <p class="text-xs text-stone-400">Pilko, suolaa, sytytä ja savusta mestarillisesti!</p>
         </div>
-        <div class="flex gap-4 mt-2 md:mt-0 text-sm">
-            <div class="bg-stone-900/80 px-3 py-1.5 rounded-xl border border-stone-800">
-                <span class="text-stone-400 block text-[10px] uppercase font-bold">Tuote</span>
-                <span id="ui-product" class="font-semibold text-amber-300">Ei tuotetta</span>
+
+        <!-- Tilasto-pillerit -->
+        <div class="flex flex-wrap gap-2 md:gap-4 mt-2 md:mt-0 text-xs">
+            <div class="bg-stone-900/90 px-3 py-1.5 rounded-xl border border-stone-800">
+                <span class="text-stone-500 block text-[9px] font-bold uppercase">Klapeja pinoissa</span>
+                <span id="ui-chopped-wood" class="font-bold text-amber-300">0 kpl</span>
             </div>
-            <div class="bg-stone-900/80 px-3 py-1.5 rounded-xl border border-stone-800">
-                <span class="text-stone-400 block text-[10px] uppercase font-bold">Kypsyys</span>
-                <span id="ui-readiness" class="font-semibold text-emerald-400">0 %</span>
+            <div class="bg-stone-900/90 px-3 py-1.5 rounded-xl border border-stone-800">
+                <span class="text-stone-500 block text-[9px] font-bold uppercase">Raaka-aine</span>
+                <span id="ui-prep-status" class="font-bold text-blue-300">Ei valittu</span>
             </div>
-            <div class="bg-stone-900/80 px-3 py-1.5 rounded-xl border border-stone-800">
-                <span class="text-stone-400 block text-[10px] uppercase font-bold">Lämpötila</span>
-                <span id="ui-temp" class="font-semibold text-orange-400">20 °C</span>
+            <div class="bg-stone-900/90 px-3 py-1.5 rounded-xl border border-stone-800">
+                <span class="text-stone-500 block text-[9px] font-bold uppercase">Lämpötila</span>
+                <span id="ui-temp" class="font-bold text-orange-400">20 °C</span>
+            </div>
+            <div class="bg-stone-900/90 px-3 py-1.5 rounded-xl border border-stone-800">
+                <span class="text-stone-500 block text-[9px] font-bold uppercase">Kypsyys</span>
+                <span id="ui-readiness" class="font-bold text-emerald-400">0 %</span>
             </div>
         </div>
     </header>
 
-    <!-- Viesti -->
-    <div id="notification" class="self-center glass border border-amber-500/40 text-amber-200 px-6 py-2.5 rounded-full text-sm font-semibold shadow-2xl transition-all duration-300 pointer-events-auto">
-        Aseta lohi tai porsas rilleille ja sytytä pesä!
+    <!-- Keskiviesti -->
+    <div id="notification" class="self-center glass border border-amber-500/30 text-amber-200 px-6 py-2.5 rounded-full text-xs md:text-sm font-semibold shadow-2xl pointer-events-auto">
+        Aloita pilkkomalla puita tai maustamalla kala/liha!
     </div>
 
-    <!-- Alapalkki -->
-    <footer class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto w-full pointer-events-auto">
+    <!-- Alapalkki: Interaktiiviset Työvaiheet -->
+    <footer class="grid grid-cols-1 md:grid-cols-4 gap-3 max-w-5xl mx-auto w-full pointer-events-auto">
 
-        <div class="glass p-4 rounded-2xl flex flex-col gap-2">
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">1. Valitse Raaka-aine</span>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="selectProduct('lohifilee')" class="bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600/40 text-xs py-2.5 px-3 rounded-xl font-bold transition active:scale-95">🐟 Lohifilee</button>
-                <button onclick="selectProduct('porsaankylki')" class="bg-red-900/40 hover:bg-red-800/60 border border-red-600/40 text-xs py-2.5 px-3 rounded-xl font-bold transition active:scale-95">🥩 Porsaankylki</button>
-            </div>
+        <!-- Step 1: Puut -->
+        <div class="glass p-3 rounded-2xl flex flex-col gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">1. Puukota & Pilko</span>
+            <button onclick="chopWood()" class="bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600/40 text-xs py-2 px-3 rounded-xl font-bold transition active:scale-95">🪓 Pilko leppähalko</button>
+            <button onclick="addWoodToSmoker()" class="bg-stone-800 hover:bg-stone-700 border border-stone-600/60 text-xs py-2 px-3 rounded-xl font-semibold transition active:scale-95">🪵 Lisää puu pesään</button>
         </div>
 
-        <div class="glass p-4 rounded-2xl flex flex-col gap-2">
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">2. Lisää Puu (Animaatiolla)</span>
-            <div class="grid grid-cols-3 gap-1.5">
-                <button onclick="addWood('leppä')" class="bg-stone-800/80 hover:bg-stone-700 border border-stone-600/60 text-xs py-2.5 px-1 rounded-xl font-semibold transition active:scale-95">🪵 Leppä</button>
-                <button onclick="addWood('omena')" class="bg-stone-800/80 hover:bg-stone-700 border border-stone-600/60 text-xs py-2.5 px-1 rounded-xl font-semibold transition active:scale-95">🍎 Omena</button>
-                <button onclick="addWood('kataja')" class="bg-stone-800/80 hover:bg-stone-700 border border-stone-600/60 text-xs py-2.5 px-1 rounded-xl font-semibold transition active:scale-95">🌲 Kataja</button>
+        <!-- Step 2: Suolaus & Maustaminen -->
+        <div class="glass p-3 rounded-2xl flex flex-col gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">2. Esivalmistele</span>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button onclick="prepareProduct('lohifilee')" class="bg-blue-900/40 hover:bg-blue-800/60 border border-blue-600/40 text-xs py-2 px-2 rounded-xl font-semibold transition active:scale-95">🐟 Lohi</button>
+                <button onclick="prepareProduct('porsaankylki')" class="bg-red-900/40 hover:bg-red-800/60 border border-red-600/40 text-xs py-2 px-2 rounded-xl font-semibold transition active:scale-95">🥩 Porsas</button>
             </div>
+            <button onclick="saltProduct()" class="bg-stone-800 hover:bg-stone-700 border border-stone-600/60 text-xs py-2 px-3 rounded-xl font-semibold transition active:scale-95">🧂 Merisuolaa & mausta</button>
         </div>
 
-        <div class="glass p-4 rounded-2xl flex flex-col gap-2">
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">3. Hallinta</span>
-            <div class="flex gap-2">
-                <button onclick="toggleSmokerDoor()" id="door-btn" class="flex-1 bg-stone-800/80 hover:bg-stone-700 border border-stone-600/60 text-xs py-2.5 px-3 rounded-xl font-semibold transition active:scale-95">🚪 Avaa luukku</button>
-                <button onclick="harvestProduct()" class="flex-1 bg-emerald-800/80 hover:bg-emerald-700 border border-emerald-600/60 text-xs py-2.5 px-3 rounded-xl font-bold transition active:scale-95">✨ Nosta pois</button>
-            </div>
+        <!-- Step 3: Savustin & Asettelu -->
+        <div class="glass p-3 rounded-2xl flex flex-col gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">3. Savustamo</span>
+            <button onclick="placeInSmoker()" class="bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-600/40 text-xs py-2 px-3 rounded-xl font-bold transition active:scale-95">🥩 Laita pönttöön</button>
+            <button onclick="toggleDoor()" id="door-btn" class="bg-stone-800 hover:bg-stone-700 border border-stone-600/60 text-xs py-2 px-3 rounded-xl font-semibold transition active:scale-95">🚪 Avaa luukku</button>
+        </div>
+
+        <!-- Step 4: Valmius -->
+        <div class="glass p-3 rounded-2xl flex flex-col gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">4. Maistelu</span>
+            <button onclick="harvestProduct()" class="bg-amber-600 hover:bg-amber-500 text-stone-950 text-xs py-3 px-3 rounded-xl font-black transition active:scale-95 h-full">✨ Nosta & Tarjoile!</button>
         </div>
 
     </footer>
 
 </div>
 
+<!-- Pelilogiikka -->
 <script>
-    // Pelin tila
+    // Peli-Mekaniikka
     let gameState = {
-        product: null,
+        choppedWood: 0,
+        prepItem: null,       // 'lohifilee', 'porsaankylki'
+        isSalted: false,
+        inSmoker: false,
         readiness: 0,
         temperature: 20,
-        woodAmount: 0,
-        woodType: 'leppä',
+        woodInFire: 0,
         doorOpen: false,
         doorAngle: 0
     };
@@ -96,11 +110,11 @@
     // Scene, Camera, Renderer
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0e1117);
-    scene.fog = new THREE.FogExp2(0x0e1117, 0.02);
+    scene.background = new THREE.Color(0x0a0c10);
+    scene.fog = new THREE.FogExp2(0x0a0c10, 0.025);
 
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2.5, 2.8, 4.5);
+    camera.position.set(3, 2.5, 4.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -109,54 +123,264 @@
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     container.appendChild(renderer.domElement);
 
-    // OrbitControls (Kameran pyöritys)
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Ei mene maankamaralle
-    controls.minDistance = 2;
-    controls.maxDistance = 10;
-    controls.target.set(0, 1.2, 0);
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.target.set(0, 1, 0);
 
-    // Valaistus
+    // Valot
     const ambientLight = new THREE.AmbientLight(0xffeedd, 0.4);
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfffaed, 1.2);
     sunLight.position.set(6, 12, 8);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
     scene.add(sunLight);
 
-    // Pesän hehkuva valo
     const fireLight = new THREE.PointLight(0xff6600, 0, 4);
     fireLight.position.set(0, 0.4, 0.5);
     scene.add(fireLight);
 
-    // Ympäristö
+    // Maa
     const groundGeo = new THREE.PlaneGeometry(40, 40);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1b241c, roughness: 0.95 });
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x161e17, roughness: 0.95 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Realistinen Savustin
-    const smokerGroup = new THREE.Group();
+    // Hakkuupölkky & Kirves
+    const stumpGeo = new THREE.CylinderGeometry(0.4, 0.45, 0.7, 12);
+    const stumpMat = new THREE.MeshStandardMaterial({ color: 0x5c4028, roughness: 0.9 });
+    const stump = new THREE.Mesh(stumpGeo, stumpMat);
+    stump.position.set(-2, 0.35, 1);
+    stump.castShadow = true;
+    scene.add(stump);
 
-    // Savustimen runko
+    // Savustin
+    const smokerGroup = new THREE.Group();
     const bodyGeo = new THREE.CylinderGeometry(0.75, 0.85, 2.0, 16);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x22262c, metalness: 0.7, roughness: 0.4 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 1.2;
     body.castShadow = true;
-    body.receiveShadow = true;
     smokerGroup.add(body);
 
     // Luukku
     const doorPivot = new THREE.Group();
     doorPivot.position.set(-0.7, 0.5, 0.4);
-
     const doorGeo = new THREE.BoxGeometry(0.05, 0.6, 0.6);
-    const doorMat = new THREE.MeshStandardMaterial({ color: 0
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x181a1e, metalness: 0.8, roughness: 0.3 });
+    const doorMesh = new THREE.Mesh(doorGeo, doorMat);
+    doorMesh.position.set(0.3, 0, 0);
+    doorPivot.add(doorMesh);
+    smokerGroup.add(doorPivot);
+
+    // Piippu
+    const pipeGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.7, 12);
+    const pipe = new THREE.Mesh(pipeGeo, bodyMat);
+    pipe.position.set(0, 2.5, 0);
+    smokerGroup.add(pipe);
+    scene.add(smokerGroup);
+
+    // Savuhiukkaset
+    function createSmokeTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+        grad.addColorStop(0.5, 'rgba(200,200,200,0.2)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 64, 64);
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    const smokeTex = createSmokeTexture();
+    const smokeParticles = [];
+    const smokeGeo = new THREE.PlaneGeometry(0.6, 0.6);
+
+    for(let i=0; i<30; i++) {
+        const mat = new THREE.MeshBasicMaterial({ map: smokeTex, transparent: true, opacity: 0, depthWrite: false });
+        const p = new THREE.Mesh(smokeGeo, mat);
+        p.position.set(0, 2.8, 0);
+        p.userData = { vy: 0.8 + Math.random()*0.5, rotSpeed: (Math.random()-0.5)*1.5, life: Math.random() };
+        scene.add(p);
+        smokeParticles.push(p);
+    }
+
+    // Tuotemalli pöntössä
+    let productMesh = null;
+
+    function updateProductMesh() {
+        if(productMesh) scene.remove(productMesh);
+        if(!gameState.inSmoker || !gameState.prepItem) return;
+
+        if(gameState.prepItem === 'lohifilee') {
+            const geo = new THREE.BoxGeometry(0.6, 0.12, 0.9);
+            const mat = new THREE.MeshStandardMaterial({ color: gameState.isSalted ? 0xd95338 : 0xee735c, roughness: 0.4 });
+            productMesh = new THREE.Mesh(geo, mat);
+        } else {
+            const geo = new THREE.BoxGeometry(0.65, 0.22, 0.65);
+            const mat = new THREE.MeshStandardMaterial({ color: gameState.isSalted ? 0x6e2e1e : 0x8f4330, roughness: 0.6 });
+            productMesh = new THREE.Mesh(geo, mat);
+        }
+        productMesh.position.set(0, 1.4, 0);
+        productMesh.castShadow = true;
+        scene.add(productMesh);
+    }
+
+    // Toiminnot
+    function chopWood() {
+        gameState.choppedWood += 2;
+        showNotification("🪓 Mätkäilit pölkyllä! Sait 2 leppäklapia pinoon.");
+        updateUI();
+    }
+
+    function addWoodToSmoker() {
+        if(gameState.choppedWood <= 0) return showNotification("Pilko ensin halkoja pölkyllä!");
+        gameState.choppedWood--;
+        gameState.woodInFire = Math.min(100, gameState.woodInFire + 30);
+        showNotification("🪵 Lisäsit leppäklapin pesään. Syttyy!");
+        updateUI();
+    }
+
+    function prepareProduct(type) {
+        if(gameState.inSmoker) return showNotification("Savustimessa on jo jotain!");
+        gameState.prepItem = type;
+        gameState.isSalted = false;
+        showNotification(`Valittu: ${type === 'lohifilee' ? '🐟 Tuore Lohifilee' : '🥩 Porsaankylki'}. Muista suolata!`);
+        updateUI();
+    }
+
+    function saltProduct() {
+        if(!gameState.prepItem) return showNotification("Valitse ensin kala tai liha!");
+        gameState.isSalted = true;
+        showNotification("🧂 Hierot merisuolaa ja mausteita pintaan. Valmista savustettavaksi!");
+        updateUI();
+    }
+
+    function placeInSmoker() {
+        if(!gameState.prepItem) return showNotification("Valitse ja mausta raaka-aine ensin!");
+        if(!gameState.isSalted) return showNotification("⚠️ Hei! Et suolannut tuotetta! Mauton tulee!");
+        gameState.inSmoker = true;
+        gameState.readiness = 0;
+        updateProductMesh();
+        showNotification("🥩 Tuote asetettu savustimen ritilälle. Sulje luukku!");
+        updateUI();
+    }
+
+    function toggleDoor() {
+        gameState.doorOpen = !gameState.doorOpen;
+        document.getElementById('door-btn').innerText = gameState.doorOpen ? "🚪 Sulje luukku" : "🚪 Avaa luukku";
+        showNotification(gameState.doorOpen ? "Luukku auki – lämpö karkaa!" : "Luukku kiinni – veto ja savu tiivistyy!");
+    }
+
+    function harvestProduct() {
+        if(!gameState.inSmoker) return showNotification("Savustimessa ei ole mitään valmista!");
+        const name = gameState.prepItem === 'lohifilee' ? 'Lohifilee' : 'Porsaankylki';
+
+        if(gameState.readiness >= 90) {
+            showNotification(`👑 MESTARITEOS! Täydellisesti savustettu ja suolattu ${name}!`);
+        } else if(gameState.readiness > 60) {
+            showNotification(`😋 Hyvää tuli! Hieman olisi saanut vielä syventyä savu.`);
+        } else {
+            showNotification(`😖 Voi ei! Aivan liian raakaa vielä.`);
+        }
+
+        gameState.inSmoker = false;
+        gameState.prepItem = null;
+        gameState.isSalted = false;
+        gameState.readiness = 0;
+        updateProductMesh();
+        updateUI();
+    }
+
+    function showNotification(txt) {
+        document.getElementById('notification').innerText = txt;
+    }
+
+    function updateUI() {
+        document.getElementById('ui-chopped-wood').innerText = gameState.choppedWood + " kpl";
+        let status = "Ei valittu";
+        if(gameState.prepItem) {
+            status = (gameState.prepItem === 'lohifilee' ? 'Lohi' : 'Porsas') + (gameState.isSalted ? ' (Suolattu)' : ' (Raaka)');
+        }
+        document.getElementById('ui-prep-status').innerText = status;
+        document.getElementById('ui-temp').innerText = Math.floor(gameState.temperature) + " °C";
+        document.getElementById('ui-readiness').innerText = Math.floor(gameState.readiness) + " %";
+    }
+
+    // Animaatiosilmukka
+    let lastTime = performance.now();
+    function animate(now) {
+        requestAnimationFrame(animate);
+        const delta = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+
+        controls.update();
+
+        // Luukku
+        const targetAngle = gameState.doorOpen ? Math.PI / 2 : 0;
+        gameState.doorAngle = THREE.MathUtils.lerp(gameState.doorAngle, targetAngle, delta * 5);
+        doorPivot.rotation.y = gameState.doorAngle;
+
+        // Lämpö & Tuli
+        if(gameState.doorOpen) {
+            gameState.temperature = Math.max(20, gameState.temperature - 15 * delta);
+        } else if(gameState.woodInFire > 0) {
+            gameState.temperature = Math.min(135, gameState.temperature + 10 * delta);
+            gameState.woodInFire = Math.max(0, gameState.woodInFire - 2 * delta);
+        } else {
+            gameState.temperature = Math.max(20, gameState.temperature - 6 * delta);
+        }
+
+        fireLight.intensity = (gameState.woodInFire > 0) ? (1.5 + Math.sin(now * 0.01) * 0.5) : 0;
+
+        // Kypsyminen
+        if(gameState.inSmoker && gameState.temperature >= 75 && gameState.temperature <= 115) {
+            gameState.readiness = Math.min(100, gameState.readiness + 2 * delta);
+        }
+
+        // Savu
+        smokeParticles.forEach((p) => {
+            if(gameState.woodInFire > 0) {
+                p.userData.life += delta;
+                p.position.y += p.userData.vy * delta;
+                p.rotation.z += p.userData.rotSpeed * delta;
+                p.lookAt(camera.position);
+
+                const fade = Math.sin((p.userData.life % 1) * Math.PI);
+                p.material.opacity = fade * 0.35;
+
+                if(p.userData.life > 1) {
+                    p.userData.life = 0;
+                    p.position.set((Math.random()-0.5)*0.1, 2.8, (Math.random()-0.5)*0.1);
+                }
+            } else {
+                p.material.opacity = 0;
+            }
+        });
+
+        // Värin kypsyminen
+        if(productMesh && gameState.inSmoker) {
+            const r = gameState.readiness / 100;
+            productMesh.material.color.setHSL(0.04, 0.7 - r * 0.3, 0.5 - r * 0.3);
+        }
+
+        updateUI();
+        renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(animate);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
