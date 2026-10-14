@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mökkisavustamo 3D</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body class="bg-stone-900 text-stone-100 select-none">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- UI Overlay -->
+    <div class="relative z-10 pointer-events-none flex flex-col justify-between h-screen p-4 md:p-6">
+        
+        <!-- Yläpalkki: Tilastot -->
+        <header class="flex flex-wrap justify-between items-center bg-stone-900/80 backdrop-blur-md p-4 rounded-2xl border border-stone-700 pointer-events-auto shadow-xl max-w-4xl mx-auto w-full">
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-amber-400 flex items-center gap-2">
+                    🔥 Mökkisavustamo 3D
+                </h1>
+                <p class="text-xs text-stone-400">Hallitse lämpöä, savua ja puulajeja</p>
+            </div>
+            <div class="flex gap-4 md:gap-8 mt-2 md:mt-0 text-sm">
+                <div class="bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
+                    <span class="text-stone-400 block text-xs">Tuote:</span>
+                    <span id="ui-product" class="font-semibold text-amber-200">Ei tuotetta</span>
+                </div>
+                <div class="bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
+                    <span class="text-stone-400 block text-xs">Kypsyys:</span>
+                    <span id="ui-readiness" class="font-semibold">0 %</span>
+                </div>
+                <div class="bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
+                    <span class="text-stone-400 block text-xs">Lämpötila:</span>
+                    <span id="ui-temp" class="font-semibold text-orange-400">20 °C</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Keskialue: Viestit / Vinkit -->
+        <div id="notification" class="self-center bg-stone-900/90 border border-amber-500/50 text-amber-200 px-6 py-2 rounded-full text-sm font-medium shadow-lg transition-opacity duration-300 pointer-events-auto">
+            Valitse tuote ja aloita savustus lisäämällä puita pesään!
+        </div>
+
+        <!-- Alapalkki: Hallinta ja Toiminnot -->
+        <footer class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto w-full">
+            
+            <!-- Raaka-aineet -->
+            <div class="bg-stone-900/80 backdrop-blur-md p-4 rounded-2xl border border-stone-700 pointer-events-auto shadow-xl flex flex-col gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-stone-400">1. Valitse tuote</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectProduct('lohifilee')" class="bg-amber-700/60 hover:bg-amber-600 border border-amber-500/40 text-xs py-2 px-3 rounded-xl font-medium transition cursor-pointer">🐟 Lohifilee</button>
+                    <button onclick="selectProduct('porsaankylki')" class="bg-amber-800/60 hover:bg-amber-700 border border-amber-600/40 text-xs py-2 px-3 rounded-xl font-medium transition cursor-pointer">🥩 Porsaankylki</button>
+                </div>
+            </div>
+
+            <!-- Puulajit ja Tuli -->
+            <div class="bg-stone-900/80 backdrop-blur-md p-4 rounded-2xl border border-stone-700 pointer-events-auto shadow-xl flex flex-col gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-stone-400">2. Lisää puuta pesään</span>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="addWood('leppä')" class="bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs py-2 px-2 rounded-xl font-medium transition cursor-pointer">🪵 Leppä</button>
+                    <button onclick="addWood('omena')" class="bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs py-2 px-2 rounded-xl font-medium transition cursor-pointer">🍎 Omena</button>
+                    <button onclick="addWood('kataja')" class="bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs py-2 px-2 rounded-xl font-medium transition cursor-pointer">🌲 Kataja</button>
+                </div>
+            </div>
+
+            <!-- Pöntön hallinta -->
+            <div class="bg-stone-900/80 backdrop-blur-md p-4 rounded-2xl border border-stone-700 pointer-events-auto shadow-xl flex flex-col gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-stone-400">3. Toiminnot</span>
+                <div class="flex gap-2">
+                    <button onclick="toggleSmokerDoor()" id="door-btn" class="flex-1 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs py-2 px-3 rounded-xl font-medium transition cursor-pointer">🚪 Avaa luukku</button>
+                    <button onclick="harvestProduct()" class="flex-1 bg-emerald-800/80 hover:bg-emerald-700 border border-emerald-600/50 text-xs py-2 px-3 rounded-xl font-medium transition cursor-pointer">✨ Nosta pois</button>
+                </div>
+            </div>
+
+        </footer>
+
+    </div>
+
+    <!-- Pelilogiikka -->
+    <script>
+        // Peli muuttujat
+        let gameState = {
+            product: null,      // 'lohifilee', 'porsaankylki'
+            readiness: 0,       // 0 - 100%
+            temperature: 20,    // °C
+            targetTemp: 90,     // Ihanne lämpö
+            woodAmount
